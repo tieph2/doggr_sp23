@@ -24,3 +24,22 @@ test( "List all users from /deTest", async () => {
 	
 	response.statusCode.should.equal(200);
 });
+
+test( "Creating a new user", async() => {
+	const payload = {
+		name: "Testname",
+		email: faker.internet.email(),
+		petType: "Dog"
+	};
+	const response = await app.inject({
+		method: "POST",
+		url: "/users",
+		payload
+	});
+	
+	response.statusCode.should.equal(200);
+	response.payload.should.not.equal(payload);
+	const resPayload = response.json();
+	resPayload.email.should.equal(payload.email);
+	resPayload.petType.should.equal("Dog");
+});
