@@ -8,7 +8,7 @@ export class UserSeeder extends Seeder {
 		em.create(User, {
 			name: "Spot",
 			email: "email@email.com",
-			petType: "Dog"
+			petType: "Dog",
 		});
 	}
 	

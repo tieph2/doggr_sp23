@@ -29,7 +29,8 @@ test( "Creating a new user", async() => {
 	const payload = {
 		name: "Testname",
 		email: faker.internet.email(),
-		petType: "Dog"
+		petType: "Dog",
+		testProp: 12
 	};
 	const response = await app.inject({
 		method: "POST",
@@ -42,4 +43,5 @@ test( "Creating a new user", async() => {
 	const resPayload = response.json();
 	resPayload.email.should.equal(payload.email);
 	resPayload.petType.should.equal("Dog");
+	resPayload.testProp.should.equal(12);
 });
