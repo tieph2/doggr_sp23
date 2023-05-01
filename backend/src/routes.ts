@@ -4,10 +4,14 @@ import {Match} from "./db/entities/Match.js";
 import {Message} from "./db/entities/Message.js";
 import {User} from "./db/entities/User.js";
 import {ICreateUserBody, IcreateMessageBody} from "./types.js";
-
+import {LanguageFilter} from "./language_filter.js";
 
 
 async function DoggrRoutes(app: FastifyInstance, _options = {}) {
+	
+	const lf = await LanguageFilter();
+	
+	
 	if (!app) {
 		throw new Error("Fasityf instance has no value during routes construction");
 	}
@@ -123,7 +127,9 @@ async function DoggrRoutes(app: FastifyInstance, _options = {}) {
 			// do the same for the matcher/owner
 			const senderUser = await req.em.findOne(User, { email: sender });
 			
-			//create a new match between them
+			lf.filter(message);
+			
+			//create a new message between them
 			const newMessage = await req.em.create(Message, {
 				sender: senderUser,
 				receiver: receiverUser,
@@ -135,7 +141,7 @@ async function DoggrRoutes(app: FastifyInstance, _options = {}) {
 			// send the match back to the user
 			return reply.send(newMessage);
 		} catch (err) {
-			console.error(err);
+			console.error(err.message);
 			return reply.status(500).send(err);
 		}
 		
@@ -184,6 +190,7 @@ async function DoggrRoutes(app: FastifyInstance, _options = {}) {
 		reply.send(messageToChange);
 	});
 	
+	//DELETE a single message
 	app.delete<{ Body: {messageId: number} }>("/messages", async(req, reply) => {
 		const {messageId} = req.body;
 		
@@ -199,6 +206,7 @@ async function DoggrRoutes(app: FastifyInstance, _options = {}) {
 		}
 	});
 	
+	//DELETE all messages from a user
 	app.delete<{ Body: {sender: string} }>("/messages/all", async(req, reply) => {
 		const {sender} = req.body;
 		
