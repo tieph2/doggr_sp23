@@ -1,7 +1,9 @@
 import {FastifyInstance, FastifyReply, FastifyRequest} from "fastify";
 import app from "./app.js";
+import {Match} from "./db/entities/Match.js";
+import {Message} from "./db/entities/Message.js";
 import {User} from "./db/entities/User.js";
-import {ICreateUserBody} from "./types.js";
+import {ICreateUserBody, IcreateMessageBody} from "./types.js";
 
 
 
@@ -81,6 +83,139 @@ async function DoggrRoutes(app: FastifyInstance, _options = {}) {
 			reply.status(500).send(err);
 		}
 	});
+	
+	// CREATE MATCH ROUTE
+	app.post<{Body: { email: string, matchee_email: string }}>("/match", async (req, reply) => {
+		const { email, matchee_email } = req.body;
+		
+		try {
+			// make sure that the matchee exists & get their user account
+			const matchee = await req.em.findOne(User, { email: matchee_email });
+			// do the same for the matcher/owner
+			const owner = await req.em.findOne(User, { email });
+			
+			//create a new match between them
+			const newMatch = await req.em.create(Match, {
+				owner,
+				matchee
+			});
+			
+			//persist it to the database
+			await req.em.flush();
+			// send the match back to the user
+			return reply.send(newMatch);
+		} catch (err) {
+			console.error(err);
+			return reply.status(500).send(err);
+		}
+		
+	});
+	
+	
+	//Message Routes
+	
+	app.post<{Body: { sender: string, receiver: string, message: string }}>("/messages", async (req, reply) => {
+		const { sender, receiver, message } = req.body;
+		
+		try {
+			// make sure that the matchee exists & get their user account
+			const receiverUser = await req.em.findOne(User, { email: receiver });
+			// do the same for the matcher/owner
+			const senderUser = await req.em.findOne(User, { email: sender });
+			
+			//create a new match between them
+			const newMessage = await req.em.create(Message, {
+				sender: senderUser,
+				receiver: receiverUser,
+				message: message,
+			});
+			
+			//persist it to the database
+			await req.em.flush();
+			// send the match back to the user
+			return reply.send(newMessage);
+		} catch (err) {
+			console.error(err);
+			return reply.status(500).send(err);
+		}
+		
+	});
+	
+	//READ all messages sent to a user
+	app.search<{Body: {receiver: string}}>( "/messages", async (req, reply) => {
+		const {receiver} = req.body;
+		
+		try {
+			const user = await req.em.findOne(User, { email: receiver });
+			const userID = user.id;
+			const messages = await req.em.find(Message, {receiver: userID});
+			console.log(messages);
+			reply.send(messages);
+		} catch(err) {
+			console.error(err);
+			reply.status(500).send(err);
+		}
+	});
+	
+	//READ all messages sent to a user
+	app.search<{Body: {sender: string}}>( "/messages/sent", async (req, reply) => {
+		const {sender} = req.body;
+		
+		try {
+			const user = await req.em.findOne(User, { email: sender });
+			const userID = user.id;
+			const messages = await req.em.find(Message, {sender: userID});
+			console.log(messages);
+			reply.send(messages);
+		} catch(err) {
+			console.error(err);
+			reply.status(500).send(err);
+		}
+	});
+	
+	//UPDATE a message that a user sent
+	app.put<{ Body: {messageId, message} }>( "/messages", async(req, reply) => {
+		const { messageId, message} = req.body;
+		const messageToChange = await req.em.findOne(Message, {id: messageId});
+		messageToChange.message = message;
+		
+		await req.em.flush();
+		console.log(messageToChange);
+		reply.send(messageToChange);
+	});
+	
+	app.delete<{ Body: {messageId: number} }>("/messages", async(req, reply) => {
+		const {messageId} = req.body;
+		
+		try {
+			const theMessage = await req.em.findOne(Message, {id: messageId});
+			await req.em.remove(theMessage)
+				.flush();
+			console.log(theMessage);
+			reply.send(theMessage);
+		} catch(err) {
+			console.error(err);
+			reply.status(500).send(err);
+		}
+	});
+	
+	app.delete<{ Body: {sender: string} }>("/messages/all", async(req, reply) => {
+		const {sender} = req.body;
+		
+		try {
+			const theUser = await req.em.findOne(User, {email: sender});
+			const userID = theUser.id;
+			const messages = await req.em.find(Message, {sender: userID});
+			for (const message of messages)
+				req.em.remove(message).flush();
+			console.log(messages);
+			reply.send(messages);
+		} catch(err) {
+			console.error(err);
+			reply.status(500).send(err);
+		}
+	});
+	
 }
 
 export default DoggrRoutes;

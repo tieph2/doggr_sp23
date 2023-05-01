@@ -4,3 +4,8 @@ export type ICreateUserBody = {
 	petType: string
 }
 
+export type IcreateMessageBody = {
+	sender: string,
+	receiver: string,
+	message: string
+}
