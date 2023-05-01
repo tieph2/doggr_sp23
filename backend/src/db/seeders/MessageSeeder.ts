@@ -10,14 +10,13 @@ export class MessageSeeder extends Seeder {
 		em.create(Message, {
 			sender: context.user1,
 			receiver: context.user2,
-			message: "Hello sucka!",
+			message: "What's up!",
 		});
 		em.create(Message, {
 			sender: context.user2,
 			receiver: context.user1,
-			message: "Hello sucka!",
+			message: "Wattup!",
 		});
-		
 	}
 	
 }

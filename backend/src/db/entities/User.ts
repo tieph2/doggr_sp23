@@ -15,6 +15,9 @@ export class User extends BaseEntity {
 	@Property()
 	petType!: string;
 	
+	@Property()
+	password: string = "password";
+	
 	// Note that these DO NOT EXIST in the database itself!
 	@OneToMany(
 		() => Match,

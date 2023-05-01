@@ -9,6 +9,7 @@ export class UserSeeder extends Seeder {
 			name: "Spot",
 			email: "email@email.com",
 			petType: "Dog",
+			password: "admin"
 		});
 		context.user2 = em.create(User, {
 			name: "Dogbert",
@@ -20,6 +21,7 @@ export class UserSeeder extends Seeder {
 			name: "Doglord",
 			email: "email3@email.com",
 			petType: "Dog"
+			
 		});
 		
 		context.user4 = em.create(User, {
