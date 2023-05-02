@@ -17,6 +17,11 @@ export class MessageSeeder extends Seeder {
 			receiver: context.user1,
 			message: "Wattup!",
 		});
+		em.create(Message, {
+			sender: context.user2,
+			receiver: context.user1,
+			message: "Heyyo!",
+		});
 	}
 	
 }

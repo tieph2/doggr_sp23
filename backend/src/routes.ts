@@ -73,15 +73,26 @@ async function DoggrRoutes(app: FastifyInstance, _options = {}) {
 	
 	//D
 	
-	app.delete<{ Body: {email} }>("/users", async(req, reply) => {
-		const {email} = req.body;
+	app.delete<{ Body: {email: string, password: string} }>("/users", async(req, reply) => {
+		const {email, password} = req.body;
 		
 		try {
-			const theUser = await req.em.findOne(User, {email});
-			await req.em.remove(theUser)
-				.flush();
-			console.log(theUser);
-			reply.send(theUser);
+			if (password == process.env.ADMIN_PASS) {
+				const theUser = await req.em.findOne(User, {email}, {
+					populate: [ // Collection names in User.ts
+						"matches",
+						"matched_by",
+						"sent_messages",
+						"received_messages"
+					]
+				});
+				await req.em.remove(theUser)
+					.flush();
+				console.log(theUser);
+				reply.send(theUser);
+			} else {
+				reply.status(401).send();
+			}
 		} catch(err) {
 			console.error(err);
 			reply.status(500).send(err);
@@ -191,15 +202,20 @@ async function DoggrRoutes(app: FastifyInstance, _options = {}) {
 	});
 	
 	//DELETE a single message
-	app.delete<{ Body: {messageId: number} }>("/messages", async(req, reply) => {
-		const {messageId} = req.body;
+	app.delete<{ Body: {messageId: number, password: string} }>("/messages", async(req, reply) => {
+		const {messageId, password} = req.body;
 		
 		try {
-			const theMessage = await req.em.findOne(Message, {id: messageId});
-			await req.em.remove(theMessage)
-				.flush();
-			console.log(theMessage);
-			reply.send(theMessage);
+			if (password == process.env.ADMIN_PASS) {
+				const theMessage = await req.em.findOne(Message, {id: messageId});
+				await req.em.remove(theMessage)
+					.flush();
+				console.log(theMessage);
+				reply.send(theMessage);
+			} else {
+				reply.status(401).send();
+			}
+			
 		} catch(err) {
 			console.error(err);
 			reply.status(500).send(err);
@@ -207,17 +223,20 @@ async function DoggrRoutes(app: FastifyInstance, _options = {}) {
 	});
 	
 	//DELETE all messages from a user
-	app.delete<{ Body: {sender: string} }>("/messages/all", async(req, reply) => {
-		const {sender} = req.body;
+	app.delete<{ Body: {sender: string, password: string} }>("/messages/all", async(req, reply) => {
+		const {sender, password} = req.body;
 		
 		try {
-			const theUser = await req.em.findOne(User, {email: sender});
-			const userID = theUser.id;
-			const messages = await req.em.find(Message, {sender: userID});
-			for (const message of messages)
-				req.em.remove(message).flush();
-			console.log(messages);
-			reply.send(messages);
+			if (password == process.env.ADMIN_PASS) {
+				const theUser = await req.em.findOne(User, {email: sender});
+				const userID = theUser.id;
+				const messages = await req.em.find(Message, {sender: userID});
+				req.em.remove(messages).flush();
+				reply.send(messages);
+			} else {
+				reply.status(401).send();
+			}
+			
 		} catch(err) {
 			console.error(err);
 			reply.status(500).send(err);
